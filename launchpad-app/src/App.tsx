@@ -203,9 +203,19 @@ const App: React.FC = () => {
               Login
             </button>
           </div>
-          <div className="mobile-menu-icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            <i className="fas fa-bars"></i>
-          </div>
+          <button
+            type="button"
+            className="mobile-menu-icon"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle navigation menu"
+            aria-expanded={mobileMenuOpen}
+          >
+            <span className="menu-icon-lines" aria-hidden="true">
+              <span className="menu-bar"></span>
+              <span className="menu-bar"></span>
+              <span className="menu-bar"></span>
+            </span>
+          </button>
         </div>
       </header>
 
