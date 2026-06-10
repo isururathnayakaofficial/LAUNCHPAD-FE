@@ -1,15 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import './App.css';
-
-// ---------- TypeScript Interfaces ----------
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  password: string;
-  role: string;
-  company: string;
-}
+import { loginUser, registerUser } from './api/auth';
 
 // ---------- App Component ----------
 const App: React.FC = () => {
@@ -17,6 +8,8 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [loginLoading, setLoginLoading] = useState<boolean>(false);
+  const [signupLoading, setSignupLoading] = useState<boolean>(false);
 
   // Login form fields
   const [loginEmail, setLoginEmail] = useState<string>('');
@@ -27,45 +20,10 @@ const App: React.FC = () => {
   const [signupName, setSignupName] = useState<string>('');
   const [signupEmail, setSignupEmail] = useState<string>('');
   const [signupPassword, setSignupPassword] = useState<string>('');
-  const [signupRole, setSignupRole] = useState<string>('');
-  const [signupCompany, setSignupCompany] = useState<string>('');
   const [signupMessage, setSignupMessage] = useState<{ text: string; isError: boolean } | null>(null);
 
-  // ---------- localStorage Helpers ----------
-  const STORAGE_KEY = 'collabhub_users';
-
-  const getUsers = (): User[] => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  };
-
-  const saveUsers = (users: User[]) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-  };
-
-  const findUserByEmail = (email: string): User | undefined => {
-    const users = getUsers();
-    return users.find(u => u.email.toLowerCase() === email.toLowerCase());
-  };
-
-  // Initialize default demo user
-  useEffect(() => {
-    const users = getUsers();
-    if (users.length === 0) {
-      const demoUser: User = {
-        id: '1',
-        name: 'Demo Founder',
-        email: 'demo@startup.com',
-        password: 'demo123',
-        role: 'Founder / Co-founder',
-        company: 'Demo Startup Inc.'
-      };
-      saveUsers([demoUser]);
-    }
-  }, []);
-
   // ---------- Handlers ----------
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginMessage(null);
 
@@ -83,27 +41,39 @@ const App: React.FC = () => {
       return;
     }
 
-    const user = findUserByEmail(loginEmail);
-    if (!user) {
-      setLoginMessage({ text: '❌ No account found with this email.', isError: true });
-      return;
-    }
-    if (user.password !== loginPassword) {
-      setLoginMessage({ text: '❌ Incorrect password.', isError: true });
-      return;
-    }
+    setLoginLoading(true);
 
-    // Success
-    setLoginMessage({ text: `✅ Welcome back, ${user.name}! Redirecting...`, isError: false });
-    setLoginEmail('');
-    setLoginPassword('');
-    setTimeout(() => {
-      alert(`Logged in as ${user.name} (demo dashboard would open)`);
-      setLoginMessage(null);
-    }, 800);
+    try {
+      const response = await loginUser({
+        email: loginEmail.trim().toLowerCase(),
+        password: loginPassword,
+      });
+
+      const userName = response.user?.name ?? loginEmail.trim();
+      setLoginMessage({ text: response.message ?? `✅ Welcome back, ${userName}!`, isError: false });
+      setLoginEmail('');
+      setLoginPassword('');
+
+      if (response.token) {
+        localStorage.setItem('launchpad_auth_token', response.token);
+      }
+      if (response.user) {
+        localStorage.setItem('launchpad_auth_user', JSON.stringify(response.user));
+      }
+
+      window.setTimeout(() => {
+        setAuthModalOpen(false);
+        setLoginMessage(null);
+      }, 1200);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Login failed. Please try again.';
+      setLoginMessage({ text: message, isError: true });
+    } finally {
+      setLoginLoading(false);
+    }
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setSignupMessage(null);
 
@@ -124,47 +94,34 @@ const App: React.FC = () => {
       setSignupMessage({ text: 'Password must be at least 6 characters.', isError: true });
       return;
     }
-    if (!signupRole) {
-      setSignupMessage({ text: 'Please select your role.', isError: true });
-      return;
-    }
-    if (!signupCompany.trim()) {
-      setSignupMessage({ text: 'Company / Startup name is required.', isError: true });
-      return;
-    }
 
-    const existing = findUserByEmail(signupEmail);
-    if (existing) {
-      setSignupMessage({ text: '⚠️ Email already registered. Please login.', isError: true });
-      return;
-    }
+    setSignupLoading(true);
 
-    const newUser: User = {
-      id: Date.now().toString(),
-      name: signupName.trim(),
-      email: signupEmail.trim().toLowerCase(),
-      password: signupPassword,
-      role: signupRole,
-      company: signupCompany.trim()
-    };
-    const updatedUsers = [...getUsers(), newUser];
-    saveUsers(updatedUsers);
+    try {
+      const normalizedEmail = signupEmail.trim().toLowerCase();
+      const response = await registerUser({
+        name: signupName.trim(),
+        email: normalizedEmail,
+        password: signupPassword,
+      });
 
-    setSignupMessage({ text: '🎉 Account created! You can now login.', isError: false });
-    // Reset signup form
-    setSignupName('');
-    setSignupEmail('');
-    setSignupPassword('');
-    setSignupRole('');
-    setSignupCompany('');
-
-    // Switch to login tab after 1.5s
-    setTimeout(() => {
+      setSignupMessage({ text: response.message ?? '🎉 Account created successfully.', isError: false });
+      setSignupName('');
+      setSignupEmail('');
+      setSignupPassword('');
+      setLoginEmail(normalizedEmail);
       setActiveTab('login');
-      setSignupMessage(null);
-      setLoginMessage({ text: '✅ Account created! Please log in.', isError: false });
-      setTimeout(() => setLoginMessage(null), 3000);
-    }, 1500);
+
+      window.setTimeout(() => {
+        setSignupMessage(null);
+        setLoginMessage({ text: '✅ Registration complete. Please log in.', isError: false });
+      }, 800);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Registration failed. Please try again.';
+      setSignupMessage({ text: message, isError: true });
+    } finally {
+      setSignupLoading(false);
+    }
   };
 
   // Smooth scroll for anchor links
@@ -274,8 +231,9 @@ const App: React.FC = () => {
                       {loginMessage.text}
                     </div>
                   )}
-                  <button type="submit" className="btn btn-primary full-width">Login to Dashboard</button>
-                  <p className="form-footnote">Demo: demo@startup.com / demo123</p>
+                  <button type="submit" className="btn btn-primary full-width" disabled={loginLoading}>
+                    {loginLoading ? 'Logging in...' : 'Login to Dashboard'}
+                  </button>
                   <p className="auth-switch-copy">
                     Don&apos;t have an account?{' '}
                     <button
@@ -292,7 +250,7 @@ const App: React.FC = () => {
                   <div className="modal-header-copy">
                     <p className="hero-panel-kicker">Join LaunchPad</p>
                     <h2>Create your account</h2>
-                    <p>Set up your profile so founders can discover your role and company.</p>
+                    <p>Set up your profile with your name, email, and password.</p>
                   </div>
                   <div className="input-group">
                     <i className="fas fa-user"></i>
@@ -309,29 +267,14 @@ const App: React.FC = () => {
                     <input type="password" placeholder="Password (min 6 characters)" value={signupPassword}
                       onChange={(e) => setSignupPassword(e.target.value)} required />
                   </div>
-                  <div className="input-group">
-                    <i className="fas fa-briefcase"></i>
-                    <select value={signupRole} onChange={(e) => setSignupRole(e.target.value)} required>
-                      <option value="" disabled>Select your role</option>
-                      <option>Founder / Co-founder</option>
-                      <option>Investor</option>
-                      <option>Developer / Engineer</option>
-                      <option>Designer</option>
-                      <option>Marketer / Growth</option>
-                      <option>Mentor / Advisor</option>
-                    </select>
-                  </div>
-                  <div className="input-group">
-                    <i className="fas fa-building"></i>
-                    <input type="text" placeholder="Company / Startup name" value={signupCompany}
-                      onChange={(e) => setSignupCompany(e.target.value)} required />
-                  </div>
                   {signupMessage && (
                     <div className="form-message" style={{ color: signupMessage.isError ? '#c62828' : '#2b7a3e' }}>
                       {signupMessage.text}
                     </div>
                   )}
-                  <button type="submit" className="btn btn-secondary full-width">Create free account</button>
+                  <button type="submit" className="btn btn-secondary full-width" disabled={signupLoading}>
+                    {signupLoading ? 'Creating account...' : 'Create free account'}
+                  </button>
                   <p className="auth-switch-copy">
                     Already have an account?{' '}
                     <button
@@ -385,7 +328,7 @@ const App: React.FC = () => {
                 <div className="step-number">01</div>
                 <i className="fas fa-user-plus step-icon"></i>
                 <h3>Create account</h3>
-                <p>Sign up with your role, company, and expertise.</p>
+                <p>Sign up with your name, email, and password.</p>
               </div>
               <div className="step-card">
                 <div className="step-number">02</div>
