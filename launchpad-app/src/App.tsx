@@ -1,15 +1,26 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import './App.css';
 import { loginUser, registerUser } from './api/auth';
+import Dashboard from './components/Dashboard';
+
+type AuthenticatedUser = {
+  id?: string;
+  name?: string;
+  email?: string;
+};
 
 // ---------- App Component ----------
 const App: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   // UI state
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [loginLoading, setLoginLoading] = useState<boolean>(false);
   const [signupLoading, setSignupLoading] = useState<boolean>(false);
+  const [authUser, setAuthUser] = useState<AuthenticatedUser | null>(null);
 
   // Login form fields
   const [loginEmail, setLoginEmail] = useState<string>('');
@@ -22,22 +33,60 @@ const App: React.FC = () => {
   const [signupPassword, setSignupPassword] = useState<string>('');
   const [signupMessage, setSignupMessage] = useState<{ text: string; isError: boolean } | null>(null);
 
+  useEffect(() => {
+    const storedUser = localStorage.getItem('launchpad_auth_user');
+    const storedToken = localStorage.getItem('launchpad_auth_token');
+
+    if (storedUser && storedToken) {
+      try {
+        setAuthUser(JSON.parse(storedUser) as AuthenticatedUser);
+      } catch {
+        localStorage.removeItem('launchpad_auth_user');
+        localStorage.removeItem('launchpad_auth_token');
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (authUser && location.pathname !== '/dashboard') {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [authUser, location.pathname, navigate]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('launchpad_auth_token');
+    localStorage.removeItem('launchpad_auth_user');
+    setAuthUser(null);
+    setAuthModalOpen(false);
+    setLoginEmail('');
+    setLoginPassword('');
+    setSignupName('');
+    setSignupEmail('');
+    setSignupPassword('');
+    setLoginMessage(null);
+    setSignupMessage(null);
+  };
+
+  if (authUser) {
+    return <Dashboard user={authUser} onLogout={handleLogout} />;
+  }
+
   // ---------- Handlers ----------
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginMessage(null);
 
     if (!loginEmail.trim()) {
-      setLoginMessage({ text: '📧 Email address is required.', isError: true });
+      setLoginMessage({ text: 'Email address is required.', isError: true });
       return;
     }
     if (!loginPassword.trim()) {
-      setLoginMessage({ text: '🔒 Password is required.', isError: true });
+      setLoginMessage({ text: ' Password is required.', isError: true });
       return;
     }
     const emailRegex = /^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/;
     if (!emailRegex.test(loginEmail)) {
-      setLoginMessage({ text: '❌ Invalid email format.', isError: true });
+      setLoginMessage({ text: ' Invalid email format.', isError: true });
       return;
     }
 
@@ -57,9 +106,10 @@ const App: React.FC = () => {
       if (response.token) {
         localStorage.setItem('launchpad_auth_token', response.token);
       }
-      if (response.user) {
-        localStorage.setItem('launchpad_auth_user', JSON.stringify(response.user));
-      }
+      const nextUser = response.user ?? { name: userName, email: loginEmail.trim().toLowerCase() };
+      localStorage.setItem('launchpad_auth_user', JSON.stringify(nextUser));
+      setAuthUser(nextUser);
+      navigate('/dashboard', { replace: true });
 
       window.setTimeout(() => {
         setAuthModalOpen(false);
@@ -109,12 +159,18 @@ const App: React.FC = () => {
       setSignupName('');
       setSignupEmail('');
       setSignupPassword('');
-      setLoginEmail(normalizedEmail);
-      setActiveTab('login');
+      const nextUser = response.user ?? { name: signupName.trim(), email: normalizedEmail };
+      localStorage.setItem('launchpad_auth_user', JSON.stringify(nextUser));
+      setAuthUser(nextUser);
+      navigate('/dashboard', { replace: true });
+
+      if (response.token) {
+        localStorage.setItem('launchpad_auth_token', response.token);
+      }
 
       window.setTimeout(() => {
         setSignupMessage(null);
-        setLoginMessage({ text: '✅ Registration complete. Please log in.', isError: false });
+        setAuthModalOpen(false);
       }, 800);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Registration failed. Please try again.';
@@ -134,7 +190,7 @@ const App: React.FC = () => {
     setMobileMenuOpen(false);
   };
 
-  return (
+  const landingPage = (
     <div className="app-wrapper">
       {/* ========== HEADER ========== */}
       <header className="main-header">
@@ -157,7 +213,7 @@ const App: React.FC = () => {
                 setActiveTab('login');
               }}
             >
-              Login
+              Get started
             </button>
           </div>
           <button
@@ -181,22 +237,63 @@ const App: React.FC = () => {
         <section id="home" className="hero-auth">
           <div className="container hero-grid">
             <div className="hero-message">
-              <h1>Where <span className="highlight">startups</span> meet & grow together</h1>
-              <p>Collaborate with co-founders, mentors, and investors. Accelerate your venture in one trusted ecosystem.</p>
+              <p className="eyebrow-copy">Team collaboration for fast-moving startups</p>
+              <h1>Build together in one focused <span className="highlight">workspace</span>.</h1>
+              <p>
+                LaunchPad brings founders, collaborators, and investors into one clean space for chat,
+                planning, and momentum without the noise.
+              </p>
+              <div className="hero-actions">
+                <button
+                  type="button"
+                  className="btn btn-primary hero-primary-action"
+                  onClick={() => {
+                    setAuthModalOpen(true);
+                    setActiveTab('login');
+                  }}
+                >
+                  Open workspace
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary hero-secondary-action"
+                  onClick={() => handleScrollTo('usage')}
+                >
+                  See how it works
+                </button>
+              </div>
               <div className="trust-badge">
-                <i className="fas fa-rocket"></i> <span>Join 5,000+ innovative teams</span>
+                <i className="fas fa-comments"></i> <span>Trusted by 5,000+ product teams</span>
               </div>
             </div>
             <div className="hero-panel">
               <div className="hero-panel-card">
-                <p className="hero-panel-kicker">Private access</p>
-                <h2>Built for founders who move fast.</h2>
-                <p>Open the login window from the header to access your workspace, saved profiles, and collaboration tools.</p>
-                <ul className="hero-panel-list">
-                  <li>Founder and investor matching</li>
-                  <li>Startup-ready collaboration tools</li>
-                  <li>Fast sign-in with account recovery path</li>
-                </ul>
+                <p className="hero-panel-kicker">Workspace preview</p>
+                <h2>Simple, sharp, and built for momentum.</h2>
+                <p>Everything sits in one place so teams can move from idea to execution faster.</p>
+                <div className="workspace-preview">
+                  <div className="workspace-preview-item">
+                    <span className="preview-dot preview-dot-yellow"></span>
+                    <div>
+                      <strong>Daily updates</strong>
+                      <span>Share what shipped and what is next.</span>
+                    </div>
+                  </div>
+                  <div className="workspace-preview-item">
+                    <span className="preview-dot preview-dot-lime"></span>
+                    <div>
+                      <strong>Investor leads</strong>
+                      <span>Track warm intros and follow-ups.</span>
+                    </div>
+                  </div>
+                  <div className="workspace-preview-item">
+                    <span className="preview-dot preview-dot-white"></span>
+                    <div>
+                      <strong>Launch tasks</strong>
+                      <span>Keep priorities visible across the team.</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -295,22 +392,23 @@ const App: React.FC = () => {
         <section id="about" className="section-about">
           <div className="container">
             <div className="section-header">
-              <h2>About LaunchPad</h2>
+              <p className="section-kicker">Why teams pick LaunchPad</p>
+              <h2>Designed for clear, high-velocity collaboration</h2>
               <div className="accent-line"></div>
             </div>
             <div className="about-grid">
               <div className="about-text">
-                <p><strong>LaunchPad</strong> is a launchpad for ambitious founders, creators, and experts. Connect with co‑founders, advisors, service providers, and funding opportunities.</p>
-                <p>Our mission: help startups scale through meaningful collaboration and trusted partnerships.</p>
+                <p><strong>LaunchPad</strong> helps ambitious teams keep conversations, decisions, and next steps in one place.</p>
+                <p>It is built for founders who want a cleaner, faster interface with a strong visual hierarchy.</p>
                 <div className="stats-row">
                   <div className="stat-item"><span>98%</span> satisfaction</div>
-                  <div className="stat-item"><span>120+</span> funded startups</div>
+                  <div className="stat-item"><span>120+</span> active teams</div>
                   <div className="stat-item"><span>45+</span> countries</div>
                 </div>
               </div>
               <div className="about-illustration">
-                <i className="fas fa-users fa-4x"></i>
-                <i className="fas fa-chart-line fa-4x"></i>
+                <i className="fas fa-layer-group fa-4x"></i>
+                <i className="fas fa-bolt fa-4x"></i>
               </div>
             </div>
           </div>
@@ -320,27 +418,27 @@ const App: React.FC = () => {
         <section id="usage" className="section-usage">
           <div className="container">
             <div className="section-header">
-              <h2>How to use <span>LaunchPad</span></h2>
-              <p>Simple steps to unlock collaboration</p>
+              <p className="section-kicker">How it works</p>
+              <h2>Three steps from signup to shared progress</h2>
             </div>
             <div className="steps-grid">
               <div className="step-card">
                 <div className="step-number">01</div>
                 <i className="fas fa-user-plus step-icon"></i>
-                <h3>Create account</h3>
+                <h3>Create your account</h3>
                 <p>Sign up with your name, email, and password.</p>
               </div>
               <div className="step-card">
                 <div className="step-number">02</div>
                 <i className="fas fa-search step-icon"></i>
-                <h3>Discover partners</h3>
-                <p>Explore founders, devs, designers & investors.</p>
+                <h3>Find the right people</h3>
+                <p>Explore founders, designers, developers, and investors.</p>
               </div>
               <div className="step-card">
                 <div className="step-number">03</div>
                 <i className="fas fa-comments step-icon"></i>
-                <h3>Collaborate & grow</h3>
-                <p>Launch joint projects, pitch sessions, mentorship calls.</p>
+                <h3>Keep moving forward</h3>
+                <p>Launch projects, share updates, and stay aligned.</p>
               </div>
             </div>
           </div>
@@ -350,8 +448,9 @@ const App: React.FC = () => {
         <section id="trusted" className="section-trusted">
           <div className="container">
             <div className="section-header">
-              <h2>Trusted by innovative teams</h2>
-              <p>Join the ecosystem of forward-thinking startups & investors</p>
+              <p className="section-kicker">Social proof</p>
+              <h2>Trusted by teams that ship fast</h2>
+              <p>Join a network of founders and operators who value clear communication.</p>
             </div>
             <div className="trusted-logos">
               <div className="logo-item"><i className="fas fa-chart-simple"></i> <span>VentureLabs</span></div>
@@ -414,6 +513,20 @@ const App: React.FC = () => {
         </div>
       </footer>
     </div>
+  );
+
+  return (
+    <Routes>
+      <Route
+        path="/"
+        element={authUser ? <Navigate to="/dashboard" replace /> : landingPage}
+      />
+      <Route
+        path="/dashboard"
+        element={authUser ? <Dashboard user={authUser} onLogout={handleLogout} /> : <Navigate to="/" replace />}
+      />
+      <Route path="*" element={<Navigate to={authUser ? '/dashboard' : '/'} replace />} />
+    </Routes>
   );
 };
 
