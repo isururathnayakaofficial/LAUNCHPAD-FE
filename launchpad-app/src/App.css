@@ -211,11 +211,13 @@ button {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 999px;
-  background: #e2e8f0;
-  color: #0f172a;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #111111;
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
   display: grid;
   place-items: center;
 }
@@ -569,6 +571,7 @@ button {
 
 .about-text {
   flex: 2;
+  color: #111111;
 }
 
 .about-text strong {
@@ -577,7 +580,7 @@ button {
 
 .about-text p {
   margin-bottom: 1rem;
-  color: #2d3a4b;
+  color: #111111;
 }
 
 .stats-row {
@@ -599,6 +602,19 @@ button {
   font-weight: 800;
   font-size: 1.2rem;
   color: #0f172a;
+}
+
+.about-visual {
+  display: flex;
+  justify-content: center;
+}
+
+.about-image {
+  width: 100%;
+  max-width: 560px;
+  display: block;
+  border-radius: 28px;
+  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.16);
 }
 
 .about-illustration {
@@ -803,6 +819,10 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .about-visual {
+    order: -1;
+  }
+
   .hero-message {
     max-width: none;
   }
@@ -928,6 +948,10 @@ button {
 
   .auth-modal {
     border-radius: 22px;
+  }
+
+  .about-image {
+    max-width: 100%;
   }
 }
 

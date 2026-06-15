@@ -406,9 +406,12 @@ const App: React.FC = () => {
                   <div className="stat-item"><span>45+</span> countries</div>
                 </div>
               </div>
-              <div className="about-illustration">
-                <i className="fas fa-layer-group fa-4x"></i>
-                <i className="fas fa-bolt fa-4x"></i>
+              <div className="about-visual">
+                <img
+                  src="/about-illustration.svg"
+                  alt="LaunchPad collaboration illustration"
+                  className="about-image"
+                />
               </div>
             </div>
           </div>
