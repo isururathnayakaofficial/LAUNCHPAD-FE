@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import './App.css';
 import { loginUser, registerUser } from './api/auth';
-import Dashboard from './components/Dashboard';
+import Dashboard from './components/todos';
 
 type AuthenticatedUser = {
   id?: string;
@@ -162,7 +162,7 @@ const App: React.FC = () => {
       const nextUser = response.user ?? { name: signupName.trim(), email: normalizedEmail };
       localStorage.setItem('launchpad_auth_user', JSON.stringify(nextUser));
       setAuthUser(nextUser);
-      navigate('/dashboard', { replace: true });
+      navigate('/todos', { replace: true });
 
       if (response.token) {
         localStorage.setItem('launchpad_auth_token', response.token);
