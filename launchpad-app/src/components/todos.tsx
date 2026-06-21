@@ -77,20 +77,24 @@ const Todos: React.FC = () => {
     const todo = todos.find((t) => t.id === id);
     if (!todo) return;
 
-    const next = todo.completed;
+    const newStatus = todo.completed ? "pending" : "completed";
+
+    const previousTodos = todos;
+
     setTodos((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
+      prev.map((t) =>
+        t.id === id ? { ...t, completed: !t.completed } : t
+      )
     );
 
     try {
-      await updateTodo(id, { completed: !next });
-    } catch {
-      setTodos((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, completed: next } : t))
-      );
+      await updateTodo(id, { status: newStatus });
+      await loadTodos();
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      setTodos(previousTodos);
     }
   };
-
   const deleteTodo = async (id: string) => {
     const prev = todos;
     setTodos((prev) => prev.filter((t) => t.id !== id));
@@ -300,7 +304,6 @@ const Todos: React.FC = () => {
                         value={editTitle}
                         onChange={(e) => setEditTitle(e.target.value)}
                         onKeyDown={(e) => handleEditKeyDown(e, todo.id)}
-                        onBlur={() => saveEdit(todo.id)}
                         aria-label="Edit title"
                       />
                       <input
@@ -309,7 +312,6 @@ const Todos: React.FC = () => {
                         value={editDesc}
                         onChange={(e) => setEditDesc(e.target.value)}
                         onKeyDown={(e) => handleEditKeyDown(e, todo.id)}
-                        onBlur={() => saveEdit(todo.id)}
                         aria-label="Edit description"
                       />
                     </div>

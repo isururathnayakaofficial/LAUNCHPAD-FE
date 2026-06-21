@@ -16,7 +16,7 @@ export type CreateTodoPayload = {
 export type UpdateTodoPayload = {
   title?: string;
   description?: string;
-  completed?: boolean;
+  status?: string;
 };
 
 const getUserId = (): string | null => {
@@ -44,7 +44,7 @@ const normalizeTodo = (item: Record<string, unknown>): Todo => ({
   id: (item._id ?? item.id ?? '') as string,
   title: (item.title ?? item.text ?? '') as string,
   description: (item.description ?? '') as string | undefined,
-  completed: !!(item.completed ?? item.isCompleted),
+  completed: item.status === 'completed' || !!(item.completed ?? item.isCompleted),
   createdAt: Number(item.createdAt ?? item.created_at ?? Date.now()),
 });
 
@@ -59,7 +59,7 @@ const extractTodos = <T>(data: T): Todo[] => {
 };
 
 export const fetchTodos = async (): Promise<Todo[]> => {
-  const response = await authFetch('/private-todos/get/{getUserId()}', {
+  const response = await authFetch(`/private-todos/get/${getUserId()}`, {
     method: 'GET',
   });
 
@@ -93,21 +93,29 @@ export const createTodo = async (payload: CreateTodoPayload): Promise<Todo> => {
   return extractSingleTodo(raw);
 };
 
-export const updateTodo = async (id: string, payload: UpdateTodoPayload): Promise<Todo> => {
-  const response = await authFetch(`/tasks/update/${id}`, {
+export const updateTodo = async (
+  id: string,
+  payload: UpdateTodoPayload
+): Promise<Todo> => {
+  const response = await authFetch(`/private-todos/update/${id}`, {
     method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify(payload),
   });
+
+  const data = await parseJsonSafely<Record<string, never>>(response);
+
   if (!response.ok) {
-    const data = await parseJsonSafely<{ message?: string }>(response);
-    throw new Error(data.message ?? 'Failed to update todo.');
+    throw new Error(data?.message ?? 'Failed to update todo.');
   }
-  const raw = await parseJsonSafely<Record<string, unknown>>(response);
-  return extractSingleTodo(raw);
+
+  return extractSingleTodo(data);
 };
 
 export const deleteTodoApi = async (id: string): Promise<void> => {
-  const response = await authFetch(`/tasks/delete/${id}`, {
+  const response = await authFetch(`/private-todos/delete/${id}`, {
     method: 'DELETE',
   });
   if (!response.ok) {
