@@ -227,10 +227,10 @@ const Todos: React.FC = () => {
             onKeyDown={handleKeyDown}
             aria-label="Task description"
           />
+          <button className="add-btn" onClick={addTodo}>
+            <span>+</span> Add task
+          </button>
         </div>
-        <button className="add-btn" onClick={addTodo}>
-          <span>+</span> Add task
-        </button>
       </div>
 
       <div className="filter-tabs">

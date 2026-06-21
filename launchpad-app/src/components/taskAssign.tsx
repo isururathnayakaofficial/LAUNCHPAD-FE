@@ -34,6 +34,7 @@ const TaskAssign = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const [title, setTitle] = useState("");
   const [name, setName] = useState("");
@@ -224,23 +225,23 @@ const TaskAssign = () => {
           <p className="dashboard-card-label">New Task</p>
 
           <div className="task-form">
-            <input className="task-input" placeholder="Task title *" value={title} onChange={(e) => setTitle(e.target.value)} />
-
-            <div className="task-form-row">
+            <div className="task-form-row-4">
+              <input className="task-input" placeholder="Task title *" value={title} onChange={(e) => setTitle(e.target.value)} />
               <input className="task-input" placeholder="Name *" value={name} onChange={(e) => setName(e.target.value)} />
               <input className="task-input" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
               <input className="task-input" placeholder="Role" value={role} onChange={(e) => setRole(e.target.value)} />
             </div>
 
-            <textarea className="task-textarea" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
-
-            <div className="task-file-row">
-              <input ref={fileRef} type="file" multiple className="task-file-input" onChange={handleFileChange} />
-              {mediaFile.length > 0 && (
-                <div className="task-file-name">
-                  {mediaFile.map((f, i) => <div key={i}>{f.name}</div>)}
-                </div>
-              )}
+            <div className="task-form-row-2">
+              <textarea className="task-textarea" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+              <div className="task-file-area">
+                <input ref={fileRef} type="file" multiple className="task-file-input" onChange={handleFileChange} />
+                {mediaFile.length > 0 && (
+                  <div className="task-file-name">
+                    {mediaFile.map((f, i) => <div key={i}>{f.name}</div>)}
+                  </div>
+                )}
+              </div>
             </div>
 
             <button className="add-btn task-submit-btn" onClick={addTask}>
@@ -258,7 +259,7 @@ const TaskAssign = () => {
             <div className="dashboard-card task-card">No tasks yet</div>
           ) : (
             tasks.map((task) => (
-              <div key={task._id || task.id} className="dashboard-card task-card">
+              <div key={task._id || task.id} className="dashboard-card task-card" onClick={() => setSelectedTask(task)} style={{ cursor: 'pointer' }}>
                 <div className="task-card-header">
                   <h3>{task.title}</h3>
                   <span className={`task-status ${getStatusClass(task.status)}`}>
@@ -266,8 +267,8 @@ const TaskAssign = () => {
                   </span>
                 </div>
                 <div className="task-assignee-name">{task.name}</div>
-                <div className="task-card-actions">
-                  <button className="action-btn delete-btn" onClick={() => deleteTask(task._id || task.id!)}>
+                <div className="task-card-actions" onClick={(e) => e.stopPropagation()}>
+                  <button className="action-btn delete-btn" onClick={(e) => { e.stopPropagation(); deleteTask(task._id || task.id!); }}>
                     ✕ Delete
                   </button>
                 </div>
@@ -276,6 +277,67 @@ const TaskAssign = () => {
           )}
         </div>
       </section>
+
+      {selectedTask && (
+        <div className="task-modal-overlay" onClick={() => setSelectedTask(null)}>
+          <div className="task-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="task-modal-close" onClick={() => setSelectedTask(null)}>✕</button>
+            <div className="task-modal-header">
+              <h2>{selectedTask.title}</h2>
+              <span className={`task-status ${getStatusClass(selectedTask.status)}`}>
+                {selectedTask.status}
+              </span>
+            </div>
+            <div className="task-modal-body">
+              <div className="task-modal-field">
+                <span className="task-modal-label">Assigned To</span>
+                <span className="task-modal-value">{selectedTask.name}</span>
+              </div>
+              {selectedTask.email && (
+                <div className="task-modal-field">
+                  <span className="task-modal-label">Email</span>
+                  <span className="task-modal-value">{selectedTask.email}</span>
+                </div>
+              )}
+              {selectedTask.role && (
+                <div className="task-modal-field">
+                  <span className="task-modal-label">Role</span>
+                  <span className="task-modal-value">{selectedTask.role}</span>
+                </div>
+              )}
+              {selectedTask.description && (
+                <div className="task-modal-field">
+                  <span className="task-modal-label">Description</span>
+                  <span className="task-modal-value">{selectedTask.description}</span>
+                </div>
+              )}
+              {(selectedTask.mediaFile || selectedTask.mediaUrl?.length) && (
+                <div className="task-modal-field">
+                  <span className="task-modal-label">Attachment</span>
+                  {(() => {
+                    const name = selectedTask.mediaFile || selectedTask.mediaUrl?.[0] || '';
+                    const ext = name.split('.').pop()?.toLowerCase();
+                    const isImage = ext ? ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext) : false;
+                    const url = `${API.replace('/api', '')}/uploads/${name}`;
+                    return isImage ? (
+                      <a href={url} target="_blank" rel="noopener noreferrer">
+                        <img src={url} alt={name} className="task-modal-img" />
+                      </a>
+                    ) : (
+                      <span className="task-modal-value">📎 {name}</span>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+            <div className="task-modal-footer">
+              <button className="action-btn delete-btn" onClick={() => { deleteTask(selectedTask._id || selectedTask.id!); setSelectedTask(null); }}>
+                ✕ Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

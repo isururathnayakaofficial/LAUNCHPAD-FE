@@ -123,27 +123,32 @@ html,body{
 .stats-row{
   display:flex;
   align-items:center;
-  gap:14px;
-  margin-top:6px;
+  justify-content:center;
+  gap:24px;
+  margin-top:14px;
   flex-wrap:wrap;
 }
 .stat-item{
   display:flex;
   flex-direction:column;
   align-items:flex-start;
-  padding:12px 14px;
-  border-radius:10px;
-  background: rgba(255,255,255,0.02);
-  border:1px solid rgba(255,255,255,0.02);
+  padding:30px 44px;
+  border-radius:20px;
+  background: rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.04);
+  min-width:170px;
 }
 .stat-item .stat-number{
   font-weight:800;
-  font-size:18px;
+  font-size:52px;
   color:#fff;
+  line-height:1;
 }
 .stat-item .stat-label{
-  font-size:12px;
+  font-size:18px;
   color:var(--muted);
+  margin-top:6px;
+  font-weight:600;
 }
 .stat-divider{
   width:1px;
@@ -167,16 +172,27 @@ html,body{
 }
 
 .add-todo{
-  display:flex;
-  gap:12px;
-  align-items:flex-start;
   margin-top:12px;
+  display:flex;
+  justify-content:center;
 }
 .add-fields{
-  flex:1;
   display:flex;
-  flex-direction:column;
+  flex-direction:row;
   gap:8px;
+  align-items:center;
+  width:100%;
+  max-width:720px;
+}
+.add-fields .add-input{
+  flex:1;
+  min-width:0;
+}
+.add-fields .add-desc-input{
+  flex:0.7;
+}
+.add-fields .add-btn{
+  flex-shrink:0;
 }
 .add-input{
   width:100%;
@@ -217,6 +233,7 @@ html,body{
   display:flex;
   gap:8px;
   margin-top:12px;
+  justify-content:center;
 }
 .filter-tab{
   background: transparent;
@@ -508,6 +525,15 @@ html,body{
 
   .edit-input{
     min-width:140px;
+  }
+}
+
+@media (max-width: 640px){
+  .add-fields{
+    flex-direction:column;
+  }
+  .add-fields .add-btn{
+    align-self:flex-start;
   }
 }
 
