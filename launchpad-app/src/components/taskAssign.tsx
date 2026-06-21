@@ -17,12 +17,14 @@ type Task = {
 
 const getToken = () => localStorage.getItem("launchpad_auth_token");
 
-const getUserId = (): string | null => {
+const decodeTokenId = (): string | null => {
   try {
-    const stored = localStorage.getItem("launchpad_auth_user");
-    if (!stored) return null;
-    const user = JSON.parse(stored);
-    return user?.id ?? null;
+    const token = getToken();
+    if (!token) return null;
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return payload?.id ?? payload?._id ?? payload?.userId ?? payload?.sub ?? null;
   } catch {
     return null;
   }
@@ -44,34 +46,47 @@ const TaskAssign = () => {
 
   const showError = (msg: string) => {
     setError(msg);
-    setTimeout(() => setError(null), 4000);
   };
 
   // ================= FETCH TASKS =================
   const loadTasks = useCallback(async () => {
     setLoading(true);
-    const userId = getUserId();
+    const token = getToken();
+    if (!token) {
+      setError("Auth token not found. Try logging out and back in.");
+      setTasks([]);
+      setLoading(false);
+      return;
+    }
+
+    const userId = decodeTokenId();
     if (!userId) {
+      setError("Could not extract user ID from token. Try logging out and back in.");
       setTasks([]);
       setLoading(false);
       return;
     }
 
     try {
-      const token = getToken();
       const res = await fetch(`${API}/tasks/get/${userId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!res.ok) {
-        throw new Error("Failed to load tasks");
+        const text = await res.text();
+        throw new Error(`Server error (${res.status}): ${text.slice(0, 100)}`);
       }
 
+      setError(null);
       const json = await res.json();
-      const list = Array.isArray(json) ? json : json.tasks ?? json.data ?? [];
+      const list = Array.isArray(json) ? json
+        : json.tasks ? json.tasks
+        : json.data ? (Array.isArray(json.data) ? json.data : [])
+        : [];
       setTasks(list);
     } catch (err) {
       console.error(err);
+      showError(err instanceof Error ? err.message : "Failed to load tasks");
       setTasks([]);
     } finally {
       setLoading(false);
@@ -172,6 +187,7 @@ const TaskAssign = () => {
         const data = await res.json();
         throw new Error(data?.message || "Delete failed");
       }
+      setError(null);
     } catch (err) {
       console.error(err);
       setTasks(prev);
