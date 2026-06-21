@@ -103,6 +103,7 @@ const Dashboard = ({ user }: DashboardProps) => {
           <div>
             <p className="dashboard-kicker">Startup Collaboration Platform</p>
             <h1>Welcome back, {displayName}</h1>
+            <p className="dashboard-user-email">{user.email}</p>
             <p className="dashboard-copy">
               Your launch hub for team tasks, investor connections, and startup momentum.
             </p>
