@@ -2,7 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import './App.css';
 import { loginUser, registerUser } from './api/auth';
-import Dashboard from './components/todos';
+import Dashboard from './components/Dashboard';
+import Header from './components/header';
+import Footer from './components/footer';
+import Todos from './components/todos';
+import TaskAssign from './components/taskAssign';
 
 type AuthenticatedUser = {
   id?: string;
@@ -47,11 +51,13 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const redirected = React.useRef(false);
   useEffect(() => {
-    if (authUser && location.pathname !== '/dashboard') {
+    if (authUser && !redirected.current) {
+      redirected.current = true;
       navigate('/dashboard', { replace: true });
     }
-  }, [authUser, location.pathname, navigate]);
+  }, [authUser, navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem('launchpad_auth_token');
@@ -68,7 +74,20 @@ const App: React.FC = () => {
   };
 
   if (authUser) {
-    return <Dashboard user={authUser} onLogout={handleLogout} />;
+    return (
+      <div className="app-wrapper">
+        <Header user={authUser} onLogout={handleLogout} />
+        <main>
+          <Routes>
+            <Route path="/dashboard" element={<Dashboard user={authUser} />} />
+            <Route path="/todos" element={<Todos />} />
+            <Route path="/task-assign" element={<TaskAssign />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   // ---------- Handlers ----------
@@ -162,7 +181,7 @@ const App: React.FC = () => {
       const nextUser = response.user ?? { name: signupName.trim(), email: normalizedEmail };
       localStorage.setItem('launchpad_auth_user', JSON.stringify(nextUser));
       setAuthUser(nextUser);
-      navigate('/todos', { replace: true });
+      navigate('/dashboard', { replace: true });
 
       if (response.token) {
         localStorage.setItem('launchpad_auth_token', response.token);
@@ -526,7 +545,7 @@ const App: React.FC = () => {
       />
       <Route
         path="/dashboard"
-        element={authUser ? <Dashboard user={authUser} onLogout={handleLogout} /> : <Navigate to="/" replace />}
+        element={authUser ? <Dashboard user={authUser} /> : <Navigate to="/" replace />}
       />
       <Route path="*" element={<Navigate to={authUser ? '/dashboard' : '/'} replace />} />
     </Routes>

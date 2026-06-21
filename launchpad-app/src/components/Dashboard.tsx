@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom';
+
 type DashboardUser = {
   id?: string;
   name?: string;
@@ -6,56 +8,69 @@ type DashboardUser = {
 
 type DashboardProps = {
   user: DashboardUser;
-  onLogout: () => void;
 };
 
-const Dashboard = ({ user, onLogout }: DashboardProps) => {
+const Dashboard = ({ user }: DashboardProps) => {
+  const navigate = useNavigate();
   const displayName = user.name?.trim() || 'Founder';
 
   return (
-    <main className="dashboard-shell">
+    <div className="dashboard-page">
       <section className="dashboard-hero">
         <div className="container dashboard-hero-grid">
           <div>
-            <p className="dashboard-kicker">LaunchPad Dashboard</p>
-            <h1>Welcome, {displayName}</h1>
+            <p className="dashboard-kicker">Startup Collaboration Platform</p>
+            <h1>Welcome back, {displayName}</h1>
             <p className="dashboard-copy">
-              Your account is active. You can now access startup matches, messages, and collaboration tools.
+              Your launch hub for team tasks, investor connections, and startup momentum.
             </p>
           </div>
-
-          <button className="btn btn-secondary dashboard-logout" type="button" onClick={onLogout}>
-            Logout
-          </button>
         </div>
       </section>
 
       <section className="dashboard-content container">
         <div className="dashboard-card dashboard-card-highlight">
-          <p className="dashboard-card-label">Signed in as</p>
-          <h2>{displayName}</h2>
-          <p>{user.email ?? 'No email on file'}</p>
+          <p className="dashboard-card-label">Workspace Overview</p>
+          <h2>{displayName}'s LaunchPad</h2>
+          <p>{user.email ?? 'No email on file'} · Active since today</p>
         </div>
 
         <div className="dashboard-grid">
+          <article className="dashboard-card" onClick={() => navigate('/todos')} style={{ cursor: 'pointer' }}>
+            <p className="dashboard-card-label">Team Todos</p>
+            <h3>Manage tasks</h3>
+            <p>Create, assign, and track tasks across your startup team.</p>
+            <span className="dashboard-card-action">Open Todos →</span>
+          </article>
+          <article className="dashboard-card" onClick={() => navigate('/task-assign')} style={{ cursor: 'pointer' }}>
+            <p className="dashboard-card-label">Task Assign</p>
+            <h3>Assign work</h3>
+            <p>Delegate responsibilities and monitor progress in real time.</p>
+            <span className="dashboard-card-action">Open Task Assign →</span>
+          </article>
           <article className="dashboard-card">
-            <p className="dashboard-card-label">Your network</p>
+            <p className="dashboard-card-label">Network</p>
             <h3>12 active matches</h3>
-            <p>People who match your founder profile and interests.</p>
+            <p>Founders, investors, and collaborators aligned with your goals.</p>
           </article>
           <article className="dashboard-card">
             <p className="dashboard-card-label">Messages</p>
-            <h3>3 unread chats</h3>
-            <p>Open conversations with collaborators and mentors.</p>
+            <h3>3 unread</h3>
+            <p>Recent conversations with your network and team members.</p>
           </article>
           <article className="dashboard-card">
-            <p className="dashboard-card-label">Next step</p>
-            <h3>Complete your profile</h3>
-            <p>Add details to improve partner recommendations.</p>
+            <p className="dashboard-card-label">Progress</p>
+            <h3>68% complete</h3>
+            <p>Your startup profile and onboarding checklist progress.</p>
+          </article>
+          <article className="dashboard-card">
+            <p className="dashboard-card-label">Resources</p>
+            <h3>Startup Kit</h3>
+            <p>Templates, pitch deck guides, and investor outreach tools.</p>
           </article>
         </div>
       </section>
-    </main>
+    </div>
   );
 };
 

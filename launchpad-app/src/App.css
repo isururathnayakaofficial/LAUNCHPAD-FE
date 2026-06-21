@@ -1518,3 +1518,114 @@ body {
     padding: 0.8rem 0.85rem;
   }
 }
+
+/* ---------- HEADER (authenticated) ---------- */
+.nav-link-active {
+  color: var(--lp-yellow) !important;
+  border-bottom: 2px solid var(--lp-yellow);
+}
+
+.header-user-name {
+  color: var(--lp-text);
+  font-weight: 500;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* ---------- DASHBOARD CARDS (clickable) ---------- */
+.dashboard-card-action {
+  display: inline-block;
+  margin-top: 0.75rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--lp-yellow-deep);
+  transition: gap 0.2s;
+}
+
+.dashboard-card:hover .dashboard-card-action {
+  text-decoration: underline;
+}
+
+/* ---------- TASK ASSIGN ---------- */
+.task-assign-page {
+  min-height: 60vh;
+}
+
+.task-board {
+  display: grid;
+  gap: 1rem;
+}
+
+.task-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.task-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+.task-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.task-card-header h3 {
+  margin: 0;
+}
+
+.task-status {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.status-todo {
+  background: rgba(255, 216, 77, 0.2);
+  color: var(--lp-yellow-deep);
+}
+
+.status-in-progress {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+}
+
+.status-done {
+  background: rgba(200, 239, 57, 0.25);
+  color: #4a7c00;
+}
+
+.task-assignee {
+  color: #4f4f4f;
+  font-size: 0.95rem;
+}
+
+.task-assignee strong {
+  color: var(--lp-ink);
+}
+
+/* ---------- AUTH ROUTE LAYOUT ---------- */
+.app-wrapper main {
+  flex: 1;
+}
+
+.app-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+@media (max-width: 720px) {
+  .nav-link-active {
+    border-bottom: none;
+    background: rgba(255, 216, 77, 0.12) !important;
+    color: var(--lp-yellow) !important;
+  }
+}

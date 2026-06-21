@@ -1,42 +1,44 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './style/todos.css';
-
-// ===== Types =====
-interface Todo {
-  id: string;
-  text: string;
-  completed: boolean;
-  createdAt: number;
-}
+import { fetchTodos, createTodo, updateTodo, deleteTodoApi } from '../api/todos';
+import type { Todo } from '../api/todos';
 
 type FilterType = 'all' | 'active' | 'completed';
 
-// ===== Main Component =====
 const Todos: React.FC = () => {
-  // ----- State -----
-  const [todos, setTodos] = useState<Todo[]>(() => {
-    const saved = localStorage.getItem('launchpad-todos');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  });
-
-  const [inputValue, setInputValue] = useState('');
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [titleValue, setTitleValue] = useState('');
+  const [descValue, setDescValue] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editText, setEditText] = useState('');
+  const [editTitle, setEditTitle] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
 
-  // ----- Effects -----
+  const showError = (msg: string) => {
+    setError(msg);
+    setTimeout(() => setError(null), 4000);
+  };
+
+  const loadTodos = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await fetchTodos();
+      setTodos(data);
+    } catch (err) {
+      console.error('Failed to load todos:', err);
+      setTodos([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    localStorage.setItem('launchpad-todos', JSON.stringify(todos));
-  }, [todos]);
+    loadTodos();
+  }, [loadTodos]);
 
   useEffect(() => {
     if (editingId && editInputRef.current) {
@@ -45,21 +47,24 @@ const Todos: React.FC = () => {
     }
   }, [editingId]);
 
-  // ----- Handlers -----
-  const addTodo = () => {
-    const trimmed = inputValue.trim();
+  const addTodo = async () => {
+    const trimmed = titleValue.trim();
     if (!trimmed) return;
 
-    const newTodo: Todo = {
-      id: crypto.randomUUID ? crypto.randomUUID() : `todo-${Date.now()}-${Math.random()}`,
-      text: trimmed,
-      completed: false,
-      createdAt: Date.now(),
-    };
-
-    setTodos((prev) => [newTodo, ...prev]);
-    setInputValue('');
-    inputRef.current?.focus();
+    try {
+      const newTodo = await createTodo({
+        title: trimmed,
+        description: descValue.trim() || undefined,
+      });
+      setTodos((prev) => [newTodo, ...prev]);
+      setTitleValue('');
+      setDescValue('');
+      setError(null);
+      inputRef.current?.focus();
+    } catch (err) {
+      console.error('Failed to add todo:', err);
+      showError(err instanceof Error ? err.message : 'Failed to add task.');
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -68,42 +73,72 @@ const Todos: React.FC = () => {
     }
   };
 
-  const toggleTodo = (id: string) => {
+  const toggleTodo = async (id: string) => {
+    const todo = todos.find((t) => t.id === id);
+    if (!todo) return;
+
+    const next = todo.completed;
     setTodos((prev) =>
-      prev.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
-      )
+      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
     );
+
+    try {
+      await updateTodo(id, { completed: !next });
+    } catch {
+      setTodos((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, completed: next } : t))
+      );
+    }
   };
 
-  const deleteTodo = (id: string) => {
-    setTodos((prev) => prev.filter((todo) => todo.id !== id));
+  const deleteTodo = async (id: string) => {
+    const prev = todos;
+    setTodos((prev) => prev.filter((t) => t.id !== id));
     if (editingId === id) setEditingId(null);
+
+    try {
+      await deleteTodoApi(id);
+    } catch {
+      setTodos(prev);
+    }
   };
 
   const startEditing = (todo: Todo) => {
     setEditingId(todo.id);
-    setEditText(todo.text);
+    setEditTitle(todo.title);
+    setEditDesc(todo.description ?? '');
   };
 
-  const saveEdit = (id: string) => {
-    const trimmed = editText.trim();
+  const saveEdit = async (id: string) => {
+    const trimmed = editTitle.trim();
     if (!trimmed) {
       deleteTodo(id);
       return;
     }
+
+    const prev = todos;
     setTodos((prev) =>
-      prev.map((todo) =>
-        todo.id === id ? { ...todo, text: trimmed } : todo
+      prev.map((t) =>
+        t.id === id
+          ? { ...t, title: trimmed, description: editDesc.trim() || undefined }
+          : t
       )
     );
     setEditingId(null);
-    setEditText('');
+
+    try {
+      await updateTodo(id, {
+        title: trimmed,
+        description: editDesc.trim() || undefined,
+      });
+    } catch {
+      setTodos(prev);
+      setEditingId(id);
+    }
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setEditText('');
   };
 
   const handleEditKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, id: string) => {
@@ -114,11 +149,6 @@ const Todos: React.FC = () => {
     }
   };
 
-  const clearCompleted = () => {
-    setTodos((prev) => prev.filter((todo) => !todo.completed));
-  };
-
-  // ----- Derived data -----
   const activeTodos = todos.filter((t) => !t.completed);
   const completedTodos = todos.filter((t) => t.completed);
 
@@ -132,10 +162,8 @@ const Todos: React.FC = () => {
   const activeCount = activeTodos.length;
   const completedCount = completedTodos.length;
 
-  // ----- Render -----
   return (
     <div className="launchpad-todos">
-      {/* ===== Header / Hero ===== */}
       <header className="todos-header">
         <div className="header-top">
           <div className="brand">
@@ -154,7 +182,6 @@ const Todos: React.FC = () => {
           </p>
         </div>
 
-        {/* Stats row */}
         <div className="stats-row">
           <div className="stat-item">
             <span className="stat-number">{totalCount}</span>
@@ -170,32 +197,38 @@ const Todos: React.FC = () => {
             <span className="stat-number">{completedCount}</span>
             <span className="stat-label">completed</span>
           </div>
-          {completedCount > 0 && (
-            <button className="clear-completed-btn" onClick={clearCompleted}>
-              Clear completed
-            </button>
-          )}
         </div>
       </header>
 
-      {/* ===== Add Todo ===== */}
+      {error && <div className="todos-error">{error}</div>}
+
       <div className="add-todo">
-        <input
-          ref={inputRef}
-          type="text"
-          className="add-input"
-          placeholder="What's next for your team?"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          aria-label="Add new todo"
-        />
+        <div className="add-fields">
+          <input
+            ref={inputRef}
+            type="text"
+            className="add-input"
+            placeholder="Task title"
+            value={titleValue}
+            onChange={(e) => setTitleValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            aria-label="Task title"
+          />
+          <input
+            type="text"
+            className="add-input add-desc-input"
+            placeholder="Description (optional)"
+            value={descValue}
+            onChange={(e) => setDescValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            aria-label="Task description"
+          />
+        </div>
         <button className="add-btn" onClick={addTodo}>
           <span>+</span> Add task
         </button>
       </div>
 
-      {/* ===== Filters ===== */}
       <div className="filter-tabs">
         <button
           className={`filter-tab ${filter === 'all' ? 'active' : ''}`}
@@ -217,9 +250,14 @@ const Todos: React.FC = () => {
         </button>
       </div>
 
-      {/* ===== Todo List ===== */}
       <div className="todo-list">
-        {filteredTodos.length === 0 ? (
+        {loading ? (
+          <div className="empty-state">
+            <div className="empty-icon">◌</div>
+            <p className="empty-text">Loading tasks...</p>
+            <span className="empty-sub">Fetching your team's todos.</span>
+          </div>
+        ) : filteredTodos.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">◌</div>
             <p className="empty-text">
@@ -252,26 +290,44 @@ const Todos: React.FC = () => {
                   {todo.completed && <span className="checkmark">✓</span>}
                 </button>
 
-                {editingId === todo.id ? (
-                  <input
-                    ref={editInputRef}
-                    type="text"
-                    className="edit-input"
-                    value={editText}
-                    onChange={(e) => setEditText(e.target.value)}
-                    onKeyDown={(e) => handleEditKeyDown(e, todo.id)}
-                    onBlur={() => saveEdit(todo.id)}
-                    aria-label="Edit todo text"
-                  />
-                ) : (
-                  <span
-                    className="todo-text"
-                    onDoubleClick={() => startEditing(todo)}
-                    title="Double-click to edit"
-                  >
-                    {todo.text}
-                  </span>
-                )}
+                <div className="todo-content">
+                  {editingId === todo.id ? (
+                    <div className="edit-fields">
+                      <input
+                        ref={editInputRef}
+                        type="text"
+                        className="edit-input"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        onKeyDown={(e) => handleEditKeyDown(e, todo.id)}
+                        onBlur={() => saveEdit(todo.id)}
+                        aria-label="Edit title"
+                      />
+                      <input
+                        type="text"
+                        className="edit-input edit-desc-input"
+                        value={editDesc}
+                        onChange={(e) => setEditDesc(e.target.value)}
+                        onKeyDown={(e) => handleEditKeyDown(e, todo.id)}
+                        onBlur={() => saveEdit(todo.id)}
+                        aria-label="Edit description"
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <span
+                        className="todo-title"
+                        onDoubleClick={() => startEditing(todo)}
+                        title="Double-click to edit"
+                      >
+                        {todo.title}
+                      </span>
+                      {todo.description && (
+                        <span className="todo-desc">{todo.description}</span>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
 
               <div className="todo-actions">
@@ -317,7 +373,6 @@ const Todos: React.FC = () => {
         )}
       </div>
 
-      {/* ===== Footer ===== */}
       <footer className="todos-footer">
         <span className="footer-text">
           {activeCount} active · {completedCount} completed
