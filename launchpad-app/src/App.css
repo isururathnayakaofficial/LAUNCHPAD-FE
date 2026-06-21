@@ -1197,6 +1197,25 @@ body {
   min-width: 13rem;
 }
 
+.hero-primary-action {
+  background: linear-gradient(135deg, var(--lp-yellow), var(--lp-lime));
+  color: var(--lp-ink);
+  border: none;
+  padding: 0.7rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  box-shadow: 0 4px 14px rgba(255, 216, 77, 0.25);
+}
+
+.hero-primary-action:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255, 216, 77, 0.35);
+}
+
 .hero-secondary-action,
 .btn-secondary {
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -1757,6 +1776,15 @@ body {
   box-shadow: 0 0 0 3px rgba(255, 216, 77, 0.16);
 }
 
+select.task-input {
+  appearance: auto;
+  cursor: pointer;
+}
+
+.profile-modal {
+  max-width: 520px;
+}
+
 .task-form-row-4 {
   display: grid;
   grid-template-columns: 1.5fr 1fr 1fr 1fr;
@@ -1985,6 +2013,23 @@ body {
   justify-content: flex-end;
 }
 
+.action-btn {
+  background: transparent;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #4f4f4f;
+  transition: all 150ms ease;
+  font-family: inherit;
+}
+
+.action-btn:hover {
+  border-color: rgba(17, 17, 17, 0.2);
+}
+
 @media (prefers-color-scheme: dark) {
   .task-modal {
     background: #1e1e2e;
@@ -2010,6 +2055,18 @@ body {
   }
   .task-modal-img {
     border-color: rgba(255, 255, 255, 0.1);
+  }
+  select.task-input {
+    background: #2a2a3e;
+    color: #e0e0e0;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  .action-btn {
+    color: #a0a0b8;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  .action-btn:hover {
+    border-color: rgba(255, 255, 255, 0.25);
   }
 }
 

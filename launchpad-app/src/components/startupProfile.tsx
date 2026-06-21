@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 type ProfileUser = {
   id?: string;
   name?: string;
@@ -8,18 +10,84 @@ type Props = {
   user: ProfileUser;
 };
 
+type ProfileData = {
+  companyName: string;
+  memberCount: string;
+  tagline: string;
+  industry: string;
+  stage: string;
+};
+
+const STORAGE_KEY = 'launchpad_startup_profile';
+
+const INDUSTRIES = [
+  'Technology & Software',
+  'Artificial Intelligence (AI)',
+  'FinTech (Finance Technology)',
+  'EdTech (Education Technology)',
+  'HealthTech',
+  'E-Commerce & Marketplace',
+  'Marketing & Media',
+  'Design & Creative',
+  'Business Services',
+  'Travel & Hospitality',
+  'AgriTech & Food',
+  'IoT & Hardware',
+  'GreenTech & Sustainability',
+  'Social Impact',
+];
+
+const STAGES = ['Idea', 'MVP', 'Prototype', 'Pre-seed', 'Seed', 'Series A', 'Series B', 'Growth', 'Established'];
+
+const loadProfile = (): ProfileData | null => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+};
+
+const saveProfile = (data: ProfileData) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+};
+
 const StartupProfile = ({ user }: Props) => {
+  const [profile, setProfile] = useState<ProfileData | null>(loadProfile);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const [form, setForm] = useState<ProfileData>(
+    profile ?? { companyName: '', memberCount: '', tagline: '', industry: '', stage: '' }
+  );
+
+  const openModal = () => {
+    setForm(profile ?? { companyName: '', memberCount: '', tagline: '', industry: '', stage: '' });
+    setModalOpen(true);
+  };
+
+  const handleSave = () => {
+    saveProfile(form);
+    setProfile(form);
+    setModalOpen(false);
+  };
+
+  const set = (field: keyof ProfileData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
   return (
     <div className="dashboard-page">
       <section className="dashboard-hero">
         <div className="container dashboard-hero-grid">
           <div>
             <p className="dashboard-kicker">Startup Profile</p>
-            <h1>{user.name?.trim() || 'Founder'}</h1>
+            <h1>{profile?.companyName || user.name?.trim() || 'Founder'}</h1>
             <p className="dashboard-user-email">{user.email}</p>
-            <p className="dashboard-copy">
-              Your startup identity, milestones, and public presence.
-            </p>
+            {profile?.tagline && <p className="dashboard-copy">{profile.tagline}</p>}
+            <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <button className="hero-primary-action" onClick={openModal}>
+                ⚙ Configure Profile
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -28,36 +96,79 @@ const StartupProfile = ({ user }: Props) => {
         <div className="dashboard-grid">
           <div className="dashboard-card">
             <p className="dashboard-card-label">Company</p>
-            <h3>Startup Name</h3>
-            <p>Tell the world about your startup.</p>
+            <h3>{profile?.companyName || '—'}</h3>
+            <p>{profile?.tagline || 'Tell the world about your startup.'}</p>
           </div>
           <div className="dashboard-card">
-            <p className="dashboard-card-label">Stage</p>
-            <h3>Idea · MVP · Growth</h3>
-            <p>Define where you are in the journey.</p>
+            <p className="dashboard-card-label">Current Stage</p>
+            <h3>{profile?.stage || '—'}</h3>
+            <p>Where you are in the startup journey.</p>
           </div>
           <div className="dashboard-card">
             <p className="dashboard-card-label">Industry</p>
-            <h3>Select sector</h3>
-            <p>Fintech, Health, SaaS, AI, etc.</p>
+            <h3>{profile?.industry || '—'}</h3>
+            <p>{profile?.industry ? 'Primary sector' : 'Select your industry.'}</p>
           </div>
           <div className="dashboard-card">
             <p className="dashboard-card-label">Team Size</p>
-            <h3>1-50+</h3>
-            <p>How many are building with you.</p>
+            <h3>{profile?.memberCount || '—'}</h3>
+            <p>{profile?.memberCount ? 'Team members' : 'How many are building with you.'}</p>
           </div>
           <div className="dashboard-card">
-            <p className="dashboard-card-label">Funding</p>
-            <h3>Bootstrapped · Pre-seed · Series A</h3>
-            <p>Current funding stage and goals.</p>
+            <p className="dashboard-card-label">Founder</p>
+            <h3>{user.name?.trim() || '—'}</h3>
+            <p>{user.email || ''}</p>
           </div>
           <div className="dashboard-card">
-            <p className="dashboard-card-label">Pitch</p>
-            <h3>One-liner</h3>
-            <p>What problem are you solving?</p>
+            <p className="dashboard-card-label">Network</p>
+            <h3>Connect & Grow</h3>
+            <p>Discover investors and collaborators.</p>
           </div>
         </div>
       </section>
+
+      {modalOpen && (
+        <div className="task-modal-overlay" onClick={() => setModalOpen(false)}>
+          <div className="task-modal profile-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="task-modal-close" onClick={() => setModalOpen(false)}>✕</button>
+            <div className="task-modal-header">
+              <h2>Startup Profile</h2>
+            </div>
+            <div className="task-modal-body">
+              <div className="task-modal-field">
+                <span className="task-modal-label">Company Name</span>
+                <input className="task-input" placeholder="Your startup name" value={form.companyName} onChange={set('companyName')} />
+              </div>
+              <div className="task-modal-field">
+                <span className="task-modal-label">Tag Line</span>
+                <input className="task-input" placeholder="A short description" value={form.tagline} onChange={set('tagline')} />
+              </div>
+              <div className="task-modal-field">
+                <span className="task-modal-label">Member Count</span>
+                <input className="task-input" placeholder="e.g. 5" value={form.memberCount} onChange={set('memberCount')} />
+              </div>
+              <div className="task-modal-field">
+                <span className="task-modal-label">Industry Category</span>
+                <select className="task-input" value={form.industry} onChange={set('industry')}>
+                  <option value="">Select industry</option>
+                  {INDUSTRIES.map((ind) => <option key={ind} value={ind}>{ind}</option>)}
+                </select>
+              </div>
+              <div className="task-modal-field">
+                <span className="task-modal-label">Current Stage</span>
+                <select className="task-input" value={form.stage} onChange={set('stage')}>
+                  <option value="">Select stage</option>
+                  {STAGES.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="task-modal-footer" style={{ justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <button className="action-btn" onClick={() => setModalOpen(false)} style={{ color: '#64748b', borderColor: 'rgba(0,0,0,0.1)' }}>Cancel</button>
+              <button className="add-btn" onClick={handleSave} style={{ padding: '0.6rem 1.4rem' }}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
