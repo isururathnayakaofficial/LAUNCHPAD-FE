@@ -59,15 +59,16 @@ const extractTodos = <T>(data: T): Todo[] => {
 };
 
 export const fetchTodos = async (): Promise<Todo[]> => {
-  const userId = getUserId();
-  if (!userId) throw new Error('User not authenticated.');
+  const response = await authFetch('/private-todos/get/{getUserId()}', {
+    method: 'GET',
+  });
 
-  const response = await authFetch(`/tasks/get/${userId}`);
   if (!response.ok) {
     const data = await parseJsonSafely<{ message?: string }>(response);
     throw new Error(data.message ?? 'Failed to fetch todos.');
   }
-  const data = await parseJsonSafely(response);
+
+  const data = await parseJsonSafely<Record<string, unknown>>(response);
   return extractTodos(data);
 };
 
