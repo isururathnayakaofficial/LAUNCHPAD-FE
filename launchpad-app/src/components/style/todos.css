@@ -74,7 +74,7 @@ html,body{
   width:44px;
   height:44px;
   background: linear-gradient(180deg, var(--accent), var(--accent-600));
-  color:#0a0a0a;
+  color:#1a1a1a;
   font-weight:800;
   border-radius:10px;
   font-size:20px;
@@ -136,12 +136,12 @@ html,body{
   background: rgba(255,255,255,0.02);
   border:1px solid rgba(255,255,255,0.02);
 }
-.stat-number{
+.stat-item .stat-number{
   font-weight:800;
   font-size:18px;
   color:#fff;
 }
-.stat-label{
+.stat-item .stat-label{
   font-size:12px;
   color:var(--muted);
 }
@@ -201,7 +201,7 @@ html,body{
 }
 .add-btn{
   background: linear-gradient(180deg, var(--accent), var(--accent-600));
-  color:#0a0a0a;
+  color:#1a1a1a;
   border:none;
   padding:12px 16px;
   border-radius:12px;
@@ -233,7 +233,7 @@ html,body{
   color: var(--text);
 }
 .filter-tab.active{
-  color:#0a0a0a;
+  color:#1a1a1a;
   background: linear-gradient(180deg, var(--accent), var(--accent-600));
   border-color: rgba(0,0,0,0.12);
 }
@@ -323,7 +323,7 @@ html,body{
 }
 .todo-checkbox.checked{
   background: linear-gradient(180deg, var(--accent), var(--accent-600));
-  color:#0a0a0a;
+  color:#1a1a1a;
   border:none;
   box-shadow: 0 4px 12px rgba(199,255,0,0.2);
 }
@@ -420,12 +420,12 @@ html,body{
 }
 .save-btn{
   background: linear-gradient(180deg, var(--accent), var(--accent-600));
-  color:#0a0a0a;
+  color:#1a1a1a;
   border:none;
 }
 .save-btn:hover{
   opacity:0.85;
-  color:#0a0a0a;
+  color:#1a1a1a;
 }
 .cancel-btn:hover{
   border-color: var(--text-dim);
