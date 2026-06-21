@@ -15,6 +15,7 @@ const navItems = [
   { label: 'Dashboard', path: '/dashboard' },
   { label: 'Todos', path: '/todos' },
   { label: 'Task Assign', path: '/task-assign' },
+  { label: 'Startup Profile', path: '/startup-profile' },
 ];
 
 const Header = ({ user, onLogout }: HeaderProps) => {

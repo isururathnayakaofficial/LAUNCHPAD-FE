@@ -7,6 +7,7 @@ import Header from './components/header';
 import Footer from './components/footer';
 import Todos from './components/todos';
 import TaskAssign from './components/taskAssign';
+import StartupProfile from './components/startupProfile';
 
 type AuthenticatedUser = {
   id?: string;
@@ -82,6 +83,7 @@ const App: React.FC = () => {
             <Route path="/dashboard" element={<Dashboard user={authUser} />} />
             <Route path="/todos" element={<Todos />} />
             <Route path="/task-assign" element={<TaskAssign />} />
+            <Route path="/startup-profile" element={<StartupProfile user={authUser} />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </main>
