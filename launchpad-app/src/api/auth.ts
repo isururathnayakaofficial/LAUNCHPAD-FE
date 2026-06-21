@@ -1,6 +1,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim() || '/api';
 
-const buildAuthUrl = (endpoint: string) => {
+export const buildAuthUrl = (endpoint: string) => {
   if (API_BASE_URL.endsWith('/api')) {
     return `${API_BASE_URL}${endpoint}`;
   }
