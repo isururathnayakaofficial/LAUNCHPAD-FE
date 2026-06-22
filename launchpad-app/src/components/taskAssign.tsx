@@ -264,7 +264,7 @@ const TaskAssign = () => {
                 <div className="task-card-header">
                   <h3>{task.title}</h3>
                   <span className={`task-status ${getStatusClass(task.status)}`}>
-                    {task.status === 'in progress' ? 'in-progress' : task.status}
+                    {task.status.replace('in progress', 'in-progress')}
                   </span>
                 </div>
                 <div className="task-assignee-name">{task.name}</div>
@@ -286,7 +286,7 @@ const TaskAssign = () => {
             <div className="task-modal-header">
               <h2>{selectedTask.title}</h2>
               <span className={`task-status ${getStatusClass(selectedTask.status)}`}>
-                {selectedTask.status === 'in progress' ? 'in-progress' : selectedTask.status}
+                {selectedTask.status.replace('in progress', 'in-progress')}
               </span>
             </div>
             <div className="task-modal-body">

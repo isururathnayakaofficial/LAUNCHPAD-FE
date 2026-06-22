@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import './App.css';
 import { loginUser, registerUser } from './api/auth';
 import Dashboard from './components/Dashboard';
@@ -8,6 +8,7 @@ import Footer from './components/footer';
 import Todos from './components/todos';
 import TaskAssign from './components/taskAssign';
 import StartupProfile from './components/startupProfile';
+import TaskNotify from './components/task-notify';
 
 type AuthenticatedUser = {
   id?: string;
@@ -15,10 +16,14 @@ type AuthenticatedUser = {
   email?: string;
 };
 
+const TaskNotifyWrapper = () => {
+  const { taskId } = useParams<{ taskId: string }>();
+  return taskId ? <TaskNotify taskId={taskId} /> : null;
+};
+
 // ---------- App Component ----------
 const App: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   // UI state
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
@@ -44,7 +49,7 @@ const App: React.FC = () => {
 
     if (storedUser && storedToken) {
       try {
-        setAuthUser(JSON.parse(storedUser) as AuthenticatedUser);
+       // setAuthUser(JSON.parse(storedUser) as AuthenticatedUser);
       } catch {
         localStorage.removeItem('launchpad_auth_user');
         localStorage.removeItem('launchpad_auth_token');
@@ -549,6 +554,7 @@ const App: React.FC = () => {
         path="/dashboard"
         element={authUser ? <Dashboard user={authUser} /> : <Navigate to="/" replace />}
       />
+      <Route path="/task-notify/:taskId" element={<TaskNotifyWrapper />} />
       <Route path="*" element={<Navigate to={authUser ? '/dashboard' : '/'} replace />} />
     </Routes>
   );

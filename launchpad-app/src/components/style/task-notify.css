@@ -1,0 +1,119 @@
+.task-notify {
+  background: #ffffff;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  max-width: 420px;
+  margin: 0 auto;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+  transition: box-shadow 0.2s;
+}
+
+.task-notify-error {
+  background: #fef2f2;
+  border-color: rgba(198, 40, 40, 0.2);
+  color: #c62828;
+}
+
+.task-notify-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--lp-ink);
+  margin-bottom: 0.4rem;
+  line-height: 1.3;
+}
+
+.task-notify-desc {
+  font-size: 0.9rem;
+  color: #4f4f4f;
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+.task-notify-accept-text {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 1rem;
+  font-style: italic;
+}
+
+.task-notify-btn {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--lp-yellow), var(--lp-lime));
+  color: var(--lp-ink);
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.55rem 1.2rem;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+  cursor: pointer;
+  border: none;
+  line-height: 1;
+  box-shadow: 0 4px 14px rgba(255, 216, 77, 0.25);
+}
+
+.task-notify-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 216, 77, 0.35);
+}
+
+.task-notify-btn:active {
+  transform: translateY(0);
+}
+
+@media (prefers-color-scheme: dark) {
+  .task-notify {
+    background: #1a1a1a;
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+  }
+
+  .task-notify-title {
+    color: #f5f5f5;
+  }
+
+  .task-notify-desc {
+    color: #a0a0a0;
+  }
+
+  .task-notify-accept-text {
+    color: #8b8ba0;
+  }
+
+  .task-notify-error {
+    background: rgba(198, 40, 40, 0.12);
+    border-color: rgba(198, 40, 40, 0.3);
+    color: #ff6b6b;
+  }
+}
+
+@media (max-width: 480px) {
+  .task-notify {
+    padding: 1.25rem;
+    border-radius: 14px;
+    max-width: 100%;
+  }
+
+  .task-notify-title {
+    font-size: 1rem;
+  }
+
+  .task-notify-desc {
+    font-size: 0.85rem;
+  }
+
+  .task-notify-btn {
+    width: 100%;
+    text-align: center;
+    padding: 0.6rem 1rem;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .task-notify {
+    padding: 1.35rem;
+    max-width: 380px;
+  }
+}

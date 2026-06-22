@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { fetchTodos } from '../api/todos';
+import { authFetch, getStoredToken, isTokenExpired } from '../api/auth';
 
 type DashboardUser = {
   id?: string;
@@ -12,8 +13,6 @@ type DashboardUser = {
 type DashboardProps = {
   user: DashboardUser;
 };
-
-const API = 'http://localhost:5000/api';
 
 const COLORS = {
   pending: '#f59e0b',
@@ -27,11 +26,9 @@ const STATUS_LABELS: Record<string, string> = {
   done: 'Done',
 };
 
-const getToken = () => localStorage.getItem('launchpad_auth_token');
-
 const getUserId = (): string | null => {
   try {
-    const token = getToken();
+    const token = getStoredToken();
     if (!token) return null;
     const parts = token.split('.');
     if (parts.length < 2) return null;
@@ -53,14 +50,19 @@ const Dashboard = ({ user }: DashboardProps) => {
   useEffect(() => {
     const loadStats = async () => {
       const userId = getUserId();
-      const token = getToken();
-      if (!userId || !token) return;
+      const token = getStoredToken();
+      if (!userId) return;
+      if (!token || isTokenExpired(token)) return;
 
       try {
-        const res = await fetch(`${API}/tasks/get/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const res = await authFetch(`/tasks/get/${userId}`, {
+          method: 'GET',
         });
-        if (!res.ok) return;
+        if (!res.ok) {
+          const text = await res.text().catch(() => '');
+          console.error(`Dashboard task fetch failed (${res.status}): ${text}`);
+          return;
+        }
         const json = await res.json();
         const list = Array.isArray(json) ? json : json.tasks ?? json.data ?? [];
         const counts: Record<string, number> = {};
@@ -77,8 +79,8 @@ const Dashboard = ({ user }: DashboardProps) => {
             color: COLORS[s as keyof typeof COLORS],
           }))
         );
-      } catch {
-        // silently fail
+      } catch (err) {
+        console.error('Dashboard task fetch error:', err);
       }
 
       try {
@@ -90,8 +92,8 @@ const Dashboard = ({ user }: DashboardProps) => {
           { name: 'Done', value: done, color: '#22c55e' },
           { name: 'Pending', value: pending, color: '#94a3b8' },
         ]);
-      } catch {
-        // silently fail
+      } catch (err) {
+        console.error('Dashboard todo fetch error:', err);
       }
     };
     loadStats();
@@ -116,6 +118,7 @@ const Dashboard = ({ user }: DashboardProps) => {
         <div className="dashboard-card dashboard-card-highlight">
           <p className="dashboard-card-label">Workspace Overview</p>
           <h2>{displayName}'s LaunchPad</h2>
+          
           <p>{user.email ?? 'No email on file'} · Active since today</p>
         </div>
 
@@ -153,7 +156,7 @@ const Dashboard = ({ user }: DashboardProps) => {
                           fontSize: 13,
                           boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
                         }}
-                        formatter={(value: number, name: string) => [value, name]}
+                        formatter={(value: any, name: any) => [value, name]}
                       />
                       <Legend
                         verticalAlign="bottom"
@@ -209,7 +212,7 @@ const Dashboard = ({ user }: DashboardProps) => {
                           fontSize: 13,
                           boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
                         }}
-                        formatter={(value: number, name: string) => [value, name]}
+                        formatter={(value: any, name: any) => [value, name]}
                       />
                       <Legend
                         verticalAlign="bottom"
