@@ -65,7 +65,8 @@ const Dashboard = ({ user }: DashboardProps) => {
         const list = Array.isArray(json) ? json : json.tasks ?? json.data ?? [];
         const counts: Record<string, number> = {};
         for (const t of list) {
-          const s = t.status || 'pending';
+          const raw = t.status || 'pending';
+          const s = raw === 'in progress' ? 'in-progress' : raw;
           counts[s] = (counts[s] || 0) + 1;
         }
         setTotalTasks(list.length);

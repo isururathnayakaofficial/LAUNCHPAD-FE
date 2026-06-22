@@ -198,7 +198,8 @@ const TaskAssign = () => {
 
   // ================= STATUS =================
   const getStatusClass = (status: string) => {
-    switch (status) {
+    const s = status === 'in progress' ? 'in-progress' : status;
+    switch (s) {
       case "pending": return "status-pending";
       case "in-progress": return "status-in-progress";
       case "done": return "status-done";
@@ -263,7 +264,7 @@ const TaskAssign = () => {
                 <div className="task-card-header">
                   <h3>{task.title}</h3>
                   <span className={`task-status ${getStatusClass(task.status)}`}>
-                    {task.status}
+                    {task.status === 'in progress' ? 'in-progress' : task.status}
                   </span>
                 </div>
                 <div className="task-assignee-name">{task.name}</div>
@@ -285,7 +286,7 @@ const TaskAssign = () => {
             <div className="task-modal-header">
               <h2>{selectedTask.title}</h2>
               <span className={`task-status ${getStatusClass(selectedTask.status)}`}>
-                {selectedTask.status}
+                {selectedTask.status === 'in progress' ? 'in-progress' : selectedTask.status}
               </span>
             </div>
             <div className="task-modal-body">
