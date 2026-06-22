@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 type ProfileUser = {
   id?: string;
@@ -8,6 +8,11 @@ type ProfileUser = {
 
 type Props = {
   user: ProfileUser;
+};
+
+type Notification = {
+  message: string;
+  type: "success" | "error";
 };
 
 type ProfileData = {
@@ -69,6 +74,22 @@ const StartupProfile = ({ user }: Props) => {
 
   const [loading, setLoading] = useState(false);
 
+  const [notification, setNotification] = useState<Notification | null>(null);
+
+  const showNotification = useCallback((message: string, type: "success" | "error") => {
+    setNotification({ message, type });
+  }, []);
+
+  const clearNotification = useCallback(() => {
+    setNotification(null);
+  }, []);
+
+  useEffect(() => {
+    if (!notification) return;
+    const timer = setTimeout(clearNotification, 4000);
+    return () => clearTimeout(timer);
+  }, [notification, clearNotification]);
+
   const [form, setForm] = useState<ProfileData>(
     profile ?? {
       companyName: "",
@@ -100,7 +121,7 @@ const StartupProfile = ({ user }: Props) => {
       const token = localStorage.getItem("launchpad_auth_token");
 
       if (!token) {
-        alert("Authentication token not found");
+        showNotification("Authentication token not found", "error");
         return;
       }
 
@@ -130,7 +151,7 @@ const StartupProfile = ({ user }: Props) => {
         throw new Error(data.message || "Profile creation failed");
       }
 
-      console.log("Profile saved:", data);
+      showNotification("Profile saved successfully", "success");
 
       // save local cache after backend success
 
@@ -142,7 +163,7 @@ const StartupProfile = ({ user }: Props) => {
     } catch (error: any) {
       console.error(error);
 
-      alert(error.message);
+      showNotification(error.message, "error");
     } finally {
       setLoading(false);
     }
@@ -363,6 +384,13 @@ const StartupProfile = ({ user }: Props) => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {notification && (
+        <div className={`notification notification-${notification.type}`} onClick={clearNotification}>
+          <span>{notification.message}</span>
+          <button className="notification-close">✕</button>
         </div>
       )}
     </div>
